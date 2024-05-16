@@ -6,6 +6,7 @@ from relbench.datasets.hm import HMDataset
 from relbench.datasets.math_stackex import MathStackExDataset
 from relbench.datasets.stackex import StackExDataset
 from relbench.datasets.trial import TrialDataset
+from relbench.datasets.relational_data import RelationalData
 
 dataset_cls_list = [
     AmazonDataset,
@@ -15,6 +16,7 @@ dataset_cls_list = [
     TrialDataset,
     FakeDataset,
     HMDataset,
+    RelationalData
 ]
 
 dataset_cls_dict = {dataset_cls.name: dataset_cls for dataset_cls in dataset_cls_list}
@@ -34,6 +36,7 @@ __all__ = [
     "F1Dataset",
     "TrialDataset",
     "FakeDataset",
+    "RelationalDataDataset",
     "dataset_cls_dict",
     "dataset_names",
     "get_dataset",
