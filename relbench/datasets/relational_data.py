@@ -6,7 +6,7 @@ from relbench.tasks.relational_data_task import InDatabaseColumnTask
 from torch_frame.utils import infer_df_stype
 from torch_frame import stype
 
-from relbench.metrics import accuracy, average_precision, f1, mae, rmse, roc_auc
+from relbench.metrics import accuracy, average_precision, f1, mae, rmse, roc_auc, multilabel_auprc_macro, multilabel_auprc_micro, multilabel_auroc_macro, multilabel_auroc_micro
 
 import os
 import pickle
@@ -56,12 +56,16 @@ class RelationalData(RelBenchDataset):
             meta
             )
         task_type_dict = {
-                'classification' : TaskType.BINARY_CLASSIFICATION,
+                'classification' : TaskType.MULTILABEL_CLASSIFICATION,
                 'regression' : TaskType.REGRESSION
             }
         task_type= task_type_dict[metadata['task'][0]]
         type_metric_dict = {
-                TaskType.BINARY_CLASSIFICATION : [roc_auc, accuracy, f1, average_precision],
+                TaskType.MULTILABEL_CLASSIFICATION : 
+                    [multilabel_auprc_micro,
+                    multilabel_auprc_macro,
+                    multilabel_auroc_micro,
+                    multilabel_auroc_macro,],#[roc_auc, accuracy, f1, average_precision],
                 TaskType.REGRESSION : [mae, rmse]
             }
         

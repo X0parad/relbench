@@ -21,6 +21,7 @@ from relbench.data.task_node import NodeTask, TaskType
 RelBenchTaskToStype = {
     TaskType.REGRESSION: stype.numerical,
     TaskType.BINARY_CLASSIFICATION: stype.categorical,
+    TaskType.MULTILABEL_CLASSIFICATION: stype.categorical,
 }
 
 
