@@ -1,6 +1,5 @@
 import argparse
 import copy
-import math
 import os
 from typing import Dict
 
@@ -25,7 +24,7 @@ from relbench.external.loader import LinkNeighborLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="rel-hm")
-parser.add_argument("--task", type=str, default="rel-hm-rec")
+parser.add_argument("--task", type=str, default="user-item-purchase")
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--epochs", type=int, default=20)
 parser.add_argument("--eval_epochs_interval", type=int, default=1)
@@ -45,6 +44,8 @@ parser.add_argument("--log_dir", type=str, default="results")
 args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    torch.set_num_threads(1)
 seed_everything(42)
 
 root_dir = "./data"
@@ -129,7 +130,7 @@ model = Model(
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 
-def train() -> Dict[str, float]:
+def train() -> float:
     model.train()
 
     loss_accum = count_accum = 0
@@ -209,7 +210,7 @@ for epoch in range(1, args.epochs + 1):
             f"Val metrics: {val_metrics}"
         )
 
-        if val_metrics[tune_metric] > best_val_metric:
+        if val_metrics[tune_metric] >= best_val_metric:
             best_val_metric = val_metrics[tune_metric]
             state_dict = copy.deepcopy(model.state_dict())
 

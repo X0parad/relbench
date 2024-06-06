@@ -25,7 +25,7 @@ from relbench.external.loader import SparseTensor
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="rel-hm")
-parser.add_argument("--task", type=str, default="rel-hm-rec")
+parser.add_argument("--task", type=str, default="user-item-purchase")
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--eval_epochs_interval", type=int, default=1)
@@ -41,6 +41,8 @@ parser.add_argument("--log_dir", type=str, default="results")
 args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    torch.set_num_threads(1)
 seed_everything(42)
 
 root_dir = "./data"
@@ -102,7 +104,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 train_sparse_tensor = SparseTensor(dst_nodes_dict["train"][1], device=device)
 
 
-def train() -> Dict[str, float]:
+def train() -> float:
     model.train()
 
     loss_accum = count_accum = 0
@@ -140,6 +142,14 @@ def train() -> Dict[str, float]:
         steps += 1
         if steps > args.max_steps_per_epoch:
             break
+
+    if count_accum == 0:
+        raise ValueError(
+            f"Did not sample a single '{task.dst_entity_table}' "
+            f"node in any mini-batch. Try to increase the number "
+            f"of layers/hops and re-try. If you run into memory "
+            f"issues with deeper nets, decrease the batch size."
+        )
 
     return loss_accum / count_accum
 
