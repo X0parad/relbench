@@ -83,12 +83,17 @@ class Model(torch.nn.Module):
         batch: HeteroData,
         entity_table: NodeType,
     ) -> Tensor:
-        seed_time = batch[entity_table].seed_time
-        x_dict = self.encoder(batch.tf_dict)
+        try:
+            seed_time = batch[entity_table].seed_time
+            x_dict = self.encoder(batch.tf_dict)
 
-        rel_time_dict = self.temporal_encoder(
-            seed_time, batch.time_dict, batch.batch_dict
-        )
+            rel_time_dict = self.temporal_encoder(
+                seed_time, batch.time_dict, batch.batch_dict
+            )
+        except Exception:
+            rel_time_dict = {}
+            seed_time = None
+            x_dict = self.encoder(batch.tf_dict)
 
         for node_type, rel_time in rel_time_dict.items():
             x_dict[node_type] = x_dict[node_type] + rel_time
@@ -103,7 +108,7 @@ class Model(torch.nn.Module):
             batch.num_sampled_edges_dict,
         )
 
-        return self.head(x_dict[entity_table][: seed_time.size(0)])
+        return self.head(x_dict[entity_table])#[: seed_time.size(0)])#
 
     def forward_dst_readout(
         self,

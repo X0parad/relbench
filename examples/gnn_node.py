@@ -21,11 +21,9 @@ from relbench.data.task_base import TaskType
 from relbench.datasets import get_dataset
 from relbench.external.graph import get_node_train_table_input, make_pkey_fkey_graph
 
-from relbench.datasets.relational_data import infer_stypes
-
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default="relational-data")
-parser.add_argument("--task", type=str, default="relational-data-task")
+parser.add_argument("--dataset", type=str, default="rel-stackex")
+parser.add_argument("--task", type=str, default="rel-stackex-engage")
 parser.add_argument("--lr", type=float, default=0.005)
 parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=512)
@@ -44,13 +42,11 @@ seed_everything(42)
 
 root_dir = "./data"
 
-
 # TODO: remove process=True once correct data/task is uploaded.
-dataset = get_dataset(name=args.dataset, process=True)
-task = dataset.get_task(args.task, process=True)
+dataset: RelBenchDataset = get_dataset(name=args.dataset, process=False)
+task: NodeTask = dataset.get_task(args.task, process=False)
 
-#col_to_stype_dict = dataset2inferred_stypes[args.dataset]
-col_to_stype_dict = infer_stypes(dataset.db)
+col_to_stype_dict = dataset2inferred_stypes[args.dataset]
 
 data, col_stats_dict = make_pkey_fkey_graph(
     dataset.db,
@@ -79,7 +75,7 @@ elif task.task_type == TaskType.REGRESSION:
     )
     multilabel = False
 elif task.task_type == TaskType.MULTILABEL_CLASSIFICATION:
-    out_channels = 4# task.num_labels
+    out_channels = task.num_labels
     loss_fn = BCEWithLogitsLoss()
     tune_metric = "multilabel_auprc_macro"
     higher_is_better = True
@@ -98,13 +94,13 @@ for split, table in [
     loader_dict[split] = NeighborLoader(
         data,
         num_neighbors=[int(args.num_neighbors / 2**i) for i in range(args.num_layers)],
-        #time_attr="time",
+        time_attr="time",
         input_nodes=table_input.nodes,
-        #input_time=table_input.time,
-        #transform=table_input.transform,
+        input_time=table_input.time,
+        transform=table_input.transform,
         batch_size=args.batch_size,
-        #temporal_strategy=args.temporal_strategy,
-        #shuffle=split == "train",
+        temporal_strategy=args.temporal_strategy,
+        shuffle=split == "train",
         num_workers=args.num_workers,
         persistent_workers=args.num_workers > 0,
     )

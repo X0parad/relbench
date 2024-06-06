@@ -21,16 +21,18 @@ from relbench.data.task_base import TaskType
 from relbench.datasets import get_dataset
 from relbench.external.graph import get_node_train_table_input, make_pkey_fkey_graph
 
+from relbench.datasets.relational_data import infer_stypes
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default="rel-stackex")
-parser.add_argument("--task", type=str, default="rel-stackex-engage")
+parser.add_argument("--dataset", type=str, default="relational-data")
+parser.add_argument("--task", type=str, default="relational-data-task")
 parser.add_argument("--lr", type=float, default=0.005)
 parser.add_argument("--epochs", type=int, default=10)
-parser.add_argument("--batch_size", type=int, default=512)
+parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--channels", type=int, default=128)
 parser.add_argument("--aggr", type=str, default="sum")
 parser.add_argument("--num_layers", type=int, default=2)
-parser.add_argument("--num_neighbors", type=int, default=128)
+parser.add_argument("--num_neighbors", type=int, default=32)
 parser.add_argument("--temporal_strategy", type=str, default="uniform")
 parser.add_argument("--num_workers", type=int, default=0)
 parser.add_argument("--max_steps_per_epoch", type=int, default=2000)
@@ -42,11 +44,13 @@ seed_everything(42)
 
 root_dir = "./data"
 
-# TODO: remove process=True once correct data/task is uploaded.
-dataset: RelBenchDataset = get_dataset(name=args.dataset, process=False)
-task: NodeTask = dataset.get_task(args.task, process=False)
 
-col_to_stype_dict = dataset2inferred_stypes[args.dataset]
+# TODO: remove process=True once correct data/task is uploaded.
+dataset = get_dataset(name=args.dataset, process=True, database= "MuskSmall")
+task = dataset.get_task(args.task, process=True)
+
+#col_to_stype_dict = dataset2inferred_stypes[args.dataset]
+col_to_stype_dict = infer_stypes(dataset.db)
 
 data, col_stats_dict = make_pkey_fkey_graph(
     dataset.db,
@@ -94,13 +98,13 @@ for split, table in [
     loader_dict[split] = NeighborLoader(
         data,
         num_neighbors=[int(args.num_neighbors / 2**i) for i in range(args.num_layers)],
-        time_attr="time",
+        #time_attr="time",
         input_nodes=table_input.nodes,
-        input_time=table_input.time,
+        #input_time=table_input.time,
         transform=table_input.transform,
         batch_size=args.batch_size,
-        temporal_strategy=args.temporal_strategy,
-        shuffle=split == "train",
+        #temporal_strategy=args.temporal_strategy,
+        #shuffle=split == "train",
         num_workers=args.num_workers,
         persistent_workers=args.num_workers > 0,
     )
